@@ -1,0 +1,655 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Farm Boy Tracker</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/quagga/0.12.1/quagga.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --green: #2d6a4f;
+    --green-light: #52b788;
+    --green-pale: #d8f3dc;
+    --red: #c1121f;
+    --red-light: #e85d5d;
+    --red-pale: #ffe0e0;
+    --cream: #faf7f2;
+    --brown: #5c3d2e;
+    --gold: #e9c46a;
+    --text: #2b2b2b;
+    --muted: #888;
+    --border: #e8e0d5;
+    --shadow: 0 4px 20px rgba(0,0,0,0.08);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'DM Sans', sans-serif; background: var(--cream); color: var(--text); min-height: 100vh; }
+
+  /* HEADER */
+  header { background: var(--green); padding: 20px 20px 16px; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 12px rgba(0,0,0,0.2); }
+  .header-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+  .logo { display: flex; align-items: center; gap: 10px; }
+  .logo-leaf { font-size: 28px; }
+  .logo-text { font-family: 'Playfair Display', serif; color: white; font-size: 20px; font-weight: 700; line-height: 1; }
+  .logo-sub { color: var(--green-light); font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase; }
+  .add-btn { background: var(--gold); color: var(--brown); border: none; border-radius: 50%; width: 44px; height: 44px; font-size: 26px; cursor: pointer; font-weight: 700; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 8px rgba(0,0,0,0.2); }
+  .search-wrap { position: relative; }
+  .search-input { width: 100%; background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.25); border-radius: 10px; padding: 10px 16px 10px 40px; color: white; font-family: 'DM Sans', sans-serif; font-size: 14px; outline: none; }
+  .search-input::placeholder { color: rgba(255,255,255,0.6); }
+  .search-icon { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); font-size: 16px; opacity: 0.7; }
+
+  /* TABS */
+  .tabs { display: flex; background: white; border-bottom: 2px solid var(--border); position: sticky; top: 108px; z-index: 99; }
+  .tab { flex: 1; padding: 14px; text-align: center; font-size: 13px; font-weight: 600; color: var(--muted); cursor: pointer; border-bottom: 3px solid transparent; margin-bottom: -2px; }
+  .tab.active-all { color: var(--brown); border-color: var(--brown); }
+  .tab.active-liked { color: var(--green); border-color: var(--green); }
+  .tab.active-disliked { color: var(--red); border-color: var(--red); }
+
+  /* STATS */
+  .stats { display: flex; gap: 10px; padding: 14px 16px; background: white; border-bottom: 1px solid var(--border); }
+  .stat { flex: 1; text-align: center; padding: 8px; border-radius: 10px; }
+  .stat-all { background: #f5f0e8; } .stat-liked { background: var(--green-pale); } .stat-disliked { background: var(--red-pale); }
+  .stat-num { font-family: 'Playfair Display', serif; font-size: 22px; font-weight: 700; line-height: 1; }
+  .stat-all .stat-num { color: var(--brown); } .stat-liked .stat-num { color: var(--green); } .stat-disliked .stat-num { color: var(--red); }
+  .stat-label { font-size: 11px; color: var(--muted); margin-top: 2px; text-transform: uppercase; letter-spacing: 0.8px; }
+
+  /* PRODUCT LIST */
+  .product-list { padding: 16px; display: flex; flex-direction: column; gap: 12px; }
+  .empty-state { text-align: center; padding: 60px 20px; color: var(--muted); }
+  .empty-icon { font-size: 52px; margin-bottom: 12px; }
+  .empty-title { font-family: 'Playfair Display', serif; font-size: 20px; color: var(--brown); margin-bottom: 6px; }
+  .empty-sub { font-size: 14px; line-height: 1.5; }
+
+  /* CARD */
+  .card { background: white; border-radius: 16px; overflow: hidden; box-shadow: var(--shadow); display: flex; border-left: 5px solid transparent; position: relative; cursor: pointer; }
+  .card.liked { border-left-color: var(--green-light); }
+  .card.disliked { border-left-color: var(--red-light); }
+  .card.neutral { border-left-color: var(--gold); }
+  .card-img { width: 90px; min-height: 90px; background: #f0ebe3; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 32px; overflow: hidden; }
+  .card-img img { width: 90px; height: 100%; object-fit: cover; min-height: 90px; }
+  .card-body { padding: 12px 40px 12px 14px; flex: 1; min-width: 0; }
+  .card-name { font-weight: 600; font-size: 15px; line-height: 1.3; margin-bottom: 2px; }
+  .card-category { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 5px; }
+  .stars-display { display: flex; gap: 2px; margin-bottom: 5px; }
+  .star { font-size: 15px; } .star.filled { color: var(--gold); } .star.empty { color: #ddd; }
+  .card-note { font-size: 12px; color: var(--muted); line-height: 1.4; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+  .card-actions { position: absolute; top: 10px; right: 10px; }
+  .card-action-btn { background: var(--cream); border: none; border-radius: 50%; width: 30px; height: 30px; font-size: 14px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+  .section-header { font-family: 'Playfair Display', serif; font-size: 18px; color: var(--brown); padding: 4px 0 8px; border-bottom: 1px solid var(--border); margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+
+  /* MODAL */
+  .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.55); z-index: 200; align-items: flex-end; justify-content: center; }
+  .modal-overlay.open { display: flex; }
+  .modal { background: white; width: 100%; max-width: 480px; border-radius: 24px 24px 0 0; padding: 20px 20px 40px; max-height: 92vh; overflow-y: auto; animation: slideUp 0.3s ease; }
+  @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+  .modal-handle { width: 40px; height: 4px; background: var(--border); border-radius: 2px; margin: 0 auto 16px; }
+  .modal-title { font-family: 'Playfair Display', serif; font-size: 22px; color: var(--brown); margin-bottom: 16px; text-align: center; }
+
+  /* ENTRY METHODS */
+  .entry-methods { display: flex; gap: 8px; margin-bottom: 16px; }
+  .entry-btn { flex: 1; padding: 10px 6px; border: 2px solid var(--border); border-radius: 12px; background: white; font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 600; color: var(--muted); cursor: pointer; text-align: center; transition: all 0.15s; }
+  .entry-btn.active { border-color: var(--green); color: var(--green); background: var(--green-pale); }
+  .entry-icon { font-size: 20px; display: block; margin-bottom: 3px; }
+
+  /* PRODUCT SEARCH */
+  .product-search-wrap { position: relative; margin-bottom: 12px; }
+  .product-search-input { width: 100%; padding: 12px 42px 12px 14px; border: 2px solid var(--green-light); border-radius: 12px; font-family: 'DM Sans', sans-serif; font-size: 15px; color: var(--text); outline: none; background: white; }
+  .product-search-input::placeholder { color: var(--muted); }
+  .product-search-spinner { position: absolute; right: 14px; top: 50%; transform: translateY(-50%); display: none; width: 18px; height: 18px; border: 2px solid var(--border); border-top-color: var(--green); border-radius: 50%; animation: spin 0.7s linear infinite; }
+  @keyframes spin { to { transform: translateY(-50%) rotate(360deg); } }
+  .product-search-spinner.show { display: block; }
+
+  /* SEARCH RESULTS DROPDOWN */
+  .search-results { border: 1.5px solid var(--border); border-radius: 12px; overflow: hidden; margin-bottom: 14px; display: none; box-shadow: 0 4px 16px rgba(0,0,0,0.1); }
+  .search-results.show { display: block; }
+  .search-result-item { display: flex; align-items: center; gap: 12px; padding: 10px 14px; cursor: pointer; border-bottom: 1px solid var(--border); background: white; transition: background 0.1s; }
+  .search-result-item:last-child { border-bottom: none; }
+  .search-result-item:active { background: var(--green-pale); }
+  .result-thumb { width: 46px; height: 46px; border-radius: 8px; object-fit: cover; background: #f0ebe3; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 22px; overflow: hidden; }
+  .result-thumb img { width: 46px; height: 46px; object-fit: cover; border-radius: 8px; }
+  .result-info { flex: 1; min-width: 0; }
+  .result-name { font-weight: 600; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .result-brand { font-size: 11px; color: var(--muted); margin-top: 1px; }
+  .search-no-results { padding: 14px; text-align: center; font-size: 13px; color: var(--muted); background: white; }
+  .search-tip { font-size: 12px; color: var(--muted); margin-bottom: 14px; text-align: center; line-height: 1.4; }
+
+  /* SELECTED PRODUCT PREVIEW */
+  .selected-product { display: none; background: var(--green-pale); border: 1.5px solid var(--green-light); border-radius: 12px; padding: 12px 14px; margin-bottom: 14px; flex-direction: row; align-items: center; gap: 12px; }
+  .selected-product.show { display: flex; }
+  .selected-thumb { width: 54px; height: 54px; border-radius: 10px; object-fit: cover; background: white; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 26px; overflow: hidden; }
+  .selected-thumb img { width: 54px; height: 54px; object-fit: cover; border-radius: 10px; }
+  .selected-info { flex: 1; min-width: 0; }
+  .selected-name { font-weight: 600; font-size: 14px; color: var(--green); }
+  .selected-sub { font-size: 11px; color: var(--muted); margin-top: 2px; }
+  .selected-clear { background: none; border: none; font-size: 18px; cursor: pointer; color: var(--muted); padding: 4px; flex-shrink: 0; }
+
+  /* BARCODE SCANNER */
+  .scanner-wrap { display: none; position: relative; width: 100%; border-radius: 14px; overflow: hidden; background: black; margin-bottom: 14px; aspect-ratio: 4/3; }
+  .scanner-wrap.active { display: block; }
+  #barcode-scanner { width: 100%; height: 100%; }
+  #barcode-scanner video { width: 100% !important; height: 100% !important; object-fit: cover; }
+  #barcode-scanner canvas.drawingBuffer { display: none; }
+  .scanner-overlay { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; pointer-events: none; }
+  .scanner-frame { width: 72%; height: 46%; border: 3px solid var(--green-light); border-radius: 10px; box-shadow: 0 0 0 9999px rgba(0,0,0,0.45); position: relative; }
+  .scanner-line { position: absolute; left: 0; right: 0; height: 2px; background: var(--green-light); animation: scanLine 1.8s ease-in-out infinite; top: 0; }
+  @keyframes scanLine { 0%,100% { top: 0; } 50% { top: calc(100% - 2px); } }
+  .scanner-tip { color: rgba(255,255,255,0.85); font-size: 12px; margin-top: 14px; text-align: center; padding: 0 20px; }
+  .scanner-status { position: absolute; bottom: 10px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.65); color: white; padding: 5px 14px; border-radius: 20px; font-size: 12px; white-space: nowrap; }
+  .stop-scan-btn { width: 100%; padding: 10px; background: #444; color: white; border: none; border-radius: 10px; font-family: 'DM Sans', sans-serif; font-size: 14px; cursor: pointer; margin-bottom: 12px; display: none; }
+
+  /* PHOTO UPLOAD */
+  .photo-upload { width: 100%; height: 110px; border: 2px dashed var(--border); border-radius: 14px; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; margin-bottom: 14px; background: var(--cream); position: relative; overflow: hidden; }
+  .photo-upload img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+  .photo-upload-icon { font-size: 24px; margin-bottom: 4px; }
+  .photo-upload-text { font-size: 12px; color: var(--muted); }
+  .photo-upload input { display: none; }
+
+  /* FORM */
+  .field { margin-bottom: 12px; }
+  .field label { display: block; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.8px; color: var(--muted); margin-bottom: 5px; }
+  .field input, .field select, .field textarea { width: 100%; padding: 11px 13px; border: 1.5px solid var(--border); border-radius: 10px; font-family: 'DM Sans', sans-serif; font-size: 15px; color: var(--text); background: white; outline: none; transition: border-color 0.2s; }
+  .field input:focus, .field select:focus, .field textarea:focus { border-color: var(--green-light); }
+  .field textarea { resize: vertical; min-height: 70px; }
+
+  /* STAR RATING */
+  .star-rating-input { display: flex; gap: 8px; justify-content: center; padding: 6px 0; }
+  .star-btn { font-size: 36px; background: none; border: none; cursor: pointer; color: #ddd; }
+  .star-btn.active { color: var(--gold); }
+  .rating-label { text-align: center; font-size: 13px; color: var(--muted); margin-top: 2px; min-height: 18px; }
+
+  .save-btn { width: 100%; padding: 15px; background: var(--green); color: white; border: none; border-radius: 12px; font-family: 'DM Sans', sans-serif; font-size: 16px; font-weight: 600; cursor: pointer; margin-top: 10px; }
+
+  .divider { display: flex; align-items: center; gap: 10px; margin: 14px 0; color: var(--muted); font-size: 12px; }
+  .divider::before, .divider::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-top">
+    <div class="logo">
+      <span class="logo-leaf">🌿</span>
+      <div>
+        <div class="logo-text">Farm Boy</div>
+        <div class="logo-sub">Product Tracker</div>
+      </div>
+    </div>
+    <button class="add-btn" onclick="openModal()">+</button>
+  </div>
+  <div class="search-wrap">
+    <span class="search-icon">🔍</span>
+    <input class="search-input" type="text" placeholder="Search your products…" id="searchInput" oninput="renderProducts()">
+  </div>
+</header>
+
+<div class="tabs">
+  <div class="tab active-all" id="tab-all" onclick="setTab('all')">All</div>
+  <div class="tab" id="tab-liked" onclick="setTab('liked')">👍 Liked</div>
+  <div class="tab" id="tab-disliked" onclick="setTab('disliked')">👎 Disliked</div>
+</div>
+
+<div class="stats">
+  <div class="stat stat-all"><div class="stat-num" id="stat-total">0</div><div class="stat-label">Total</div></div>
+  <div class="stat stat-liked"><div class="stat-num" id="stat-liked">0</div><div class="stat-label">Liked</div></div>
+  <div class="stat stat-disliked"><div class="stat-num" id="stat-disliked">0</div><div class="stat-label">Disliked</div></div>
+</div>
+
+<div class="product-list" id="productList"></div>
+
+<!-- MODAL -->
+<div class="modal-overlay" id="modalOverlay" onclick="closeModalIfOutside(event)">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title" id="modalTitle">Add a Product</div>
+
+    <!-- Entry method tabs -->
+    <div class="entry-methods">
+      <button class="entry-btn active" id="btn-search" onclick="setEntryMethod('search')">
+        <span class="entry-icon">🔍</span>Search
+      </button>
+      <button class="entry-btn" id="btn-scan" onclick="setEntryMethod('scan')">
+        <span class="entry-icon">📷</span>Scan Barcode
+      </button>
+      <button class="entry-btn" id="btn-manual" onclick="setEntryMethod('manual')">
+        <span class="entry-icon">⌨️</span>Manual
+      </button>
+    </div>
+
+    <!-- PRODUCT SEARCH PANEL -->
+    <div id="searchPanel">
+      <div class="search-tip">Search the product database — type a Farm Boy product name and select it from the results to auto-fill everything.</div>
+      <div class="product-search-wrap">
+        <input class="product-search-input" type="text" id="productSearchInput" placeholder="e.g. Farm Boy cheddar crackers…" oninput="onProductSearch(event)">
+        <div class="product-search-spinner" id="searchSpinner"></div>
+      </div>
+      <div class="search-results" id="searchResults"></div>
+    </div>
+
+    <!-- SELECTED PRODUCT PREVIEW -->
+    <div class="selected-product" id="selectedProduct">
+      <div class="selected-thumb" id="selectedThumb">🏷️</div>
+      <div class="selected-info">
+        <div class="selected-name" id="selectedName"></div>
+        <div class="selected-sub" id="selectedSub"></div>
+      </div>
+      <button class="selected-clear" onclick="clearSelectedProduct()" title="Clear">✕</button>
+    </div>
+
+    <!-- BARCODE SCANNER -->
+    <div class="scanner-wrap" id="scannerWrap">
+      <div id="barcode-scanner"></div>
+      <div class="scanner-overlay">
+        <div class="scanner-frame"><div class="scanner-line"></div></div>
+        <div class="scanner-tip">Hold steady — point at the barcode on the product</div>
+      </div>
+      <div class="scanner-status" id="scannerStatus">Starting camera…</div>
+    </div>
+    <button class="stop-scan-btn" id="stopScanBtn" onclick="stopScanner()">✕ Cancel Scan</button>
+
+    <!-- PHOTO UPLOAD (shown for manual / as override) -->
+    <div class="photo-upload" id="photoUpload" onclick="document.getElementById('photoFile').click()">
+      <span class="photo-upload-icon">📸</span>
+      <span class="photo-upload-text">Tap to add or change photo (optional)</span>
+      <input type="file" id="photoFile" accept="image/*" onchange="handlePhoto(event)">
+    </div>
+
+    <div class="field">
+      <label>Product Name *</label>
+      <input type="text" id="inputName" placeholder="e.g. Aged Cheddar Crackers">
+    </div>
+    <div class="field">
+      <label>Category</label>
+      <select id="inputCategory">
+        <option value="">— Select —</option>
+        <option>Snacks & Crackers</option>
+        <option>Cheese & Dairy</option>
+        <option>Bread & Bakery</option>
+        <option>Beverages</option>
+        <option>Sauces & Condiments</option>
+        <option>Frozen Foods</option>
+        <option>Deli & Charcuterie</option>
+        <option>Pantry & Dry Goods</option>
+        <option>Sweets & Desserts</option>
+        <option>Fresh Produce</option>
+        <option>Other</option>
+      </select>
+    </div>
+
+    <div class="field">
+      <label>Your Rating</label>
+      <div class="star-rating-input">
+        <button class="star-btn" onclick="setRating(1)">★</button>
+        <button class="star-btn" onclick="setRating(2)">★</button>
+        <button class="star-btn" onclick="setRating(3)">★</button>
+        <button class="star-btn" onclick="setRating(4)">★</button>
+        <button class="star-btn" onclick="setRating(5)">★</button>
+      </div>
+      <div class="rating-label" id="ratingLabel">Tap a star to rate</div>
+    </div>
+
+    <div class="field">
+      <label>Notes (optional)</label>
+      <textarea id="inputNote" placeholder="What did you think? Would you buy it again?"></textarea>
+    </div>
+
+    <button class="save-btn" onclick="saveProduct()">Save Product</button>
+  </div>
+</div>
+
+<script>
+  // ── State ──────────────────────────────────────────────────
+  let products = [];
+  let currentTab = 'all';
+  let editingId = null;
+  let currentRating = 0;
+  let currentPhoto = null;
+  let scannedBarcode = null;
+  let scannerRunning = false;
+  let searchTimer = null;
+
+  const LABELS = ['','😬 Really Disliked','😕 Didn\'t Love It','😐 It\'s OK','😊 Pretty Good','🤩 Loved It!'];
+
+  // ── Storage ───────────────────────────────────────────────
+  async function loadProducts() {
+    try { const r = await window.storage.get('farmboy-v3'); if (r?.value) products = JSON.parse(r.value); } catch(e) {}
+    renderProducts();
+  }
+  async function persist() {
+    try { await window.storage.set('farmboy-v3', JSON.stringify(products)); } catch(e) {}
+  }
+
+  // ── Tabs ──────────────────────────────────────────────────
+  function setTab(t) {
+    currentTab = t;
+    document.querySelectorAll('.tab').forEach(el => el.className = 'tab');
+    document.getElementById('tab-' + t).className = 'tab active-' + t;
+    renderProducts();
+  }
+
+  // ── Render ────────────────────────────────────────────────
+  function renderProducts() {
+    const q = document.getElementById('searchInput').value.toLowerCase();
+    let list = products.filter(p => {
+      const m = (p.name||'').toLowerCase().includes(q)||(p.category||'').toLowerCase().includes(q)||(p.note||'').toLowerCase().includes(q);
+      if (!m) return false;
+      if (currentTab==='liked') return p.rating>=4;
+      if (currentTab==='disliked') return p.rating>0&&p.rating<=2;
+      return true;
+    });
+
+    document.getElementById('stat-total').textContent = products.length;
+    document.getElementById('stat-liked').textContent = products.filter(p=>p.rating>=4).length;
+    document.getElementById('stat-disliked').textContent = products.filter(p=>p.rating>0&&p.rating<=2).length;
+
+    const el = document.getElementById('productList');
+    if (!list.length) {
+      const msgs = {liked:['🌿','Nothing here yet','Rate something 4–5 ⭐ to see it here!'],disliked:['🍂','Nothing here yet','Rate something 1–2 ⭐ to see it here!'],all:['🛒','Nothing tracked yet','Tap + to add your first Farm Boy product!']};
+      const [icon,title,sub] = msgs[currentTab]||msgs.all;
+      el.innerHTML = `<div class="empty-state"><div class="empty-icon">${icon}</div><div class="empty-title">${title}</div><div class="empty-sub">${sub}</div></div>`;
+      return;
+    }
+
+    if (currentTab==='all') {
+      const liked=list.filter(p=>p.rating>=4), neutral=list.filter(p=>p.rating===3||!p.rating), disliked=list.filter(p=>p.rating>0&&p.rating<=2);
+      let h='';
+      if (liked.length) h+=`<div class="section-header">🌿 Liked</div>`+liked.map(cardHTML).join('');
+      if (neutral.length) h+=`<div class="section-header">⚖️ Mixed / Unrated</div>`+neutral.map(cardHTML).join('');
+      if (disliked.length) h+=`<div class="section-header">🍂 Didn't Like</div>`+disliked.map(cardHTML).join('');
+      el.innerHTML = h;
+    } else {
+      el.innerHTML = list.map(cardHTML).join('');
+    }
+  }
+
+  function cardHTML(p) {
+    const s = p.rating>=4?'liked':p.rating>0&&p.rating<=2?'disliked':'neutral';
+    const stars = [1,2,3,4,5].map(i=>`<span class="star ${i<=p.rating?'filled':'empty'}">★</span>`).join('');
+    const img = p.photo
+      ? `<div class="card-img"><img src="${p.photo}" alt="${p.name}"></div>`
+      : `<div class="card-img">🏷️</div>`;
+    return `<div class="card ${s}" onclick="openModal('${p.id}')">
+      ${img}
+      <div class="card-body">
+        <div class="card-name">${p.name}</div>
+        ${p.category?`<div class="card-category">${p.category}</div>`:''}
+        <div class="stars-display">${stars}</div>
+        ${p.note?`<div class="card-note">${p.note}</div>`:''}
+      </div>
+      <div class="card-actions"><button class="card-action-btn" onclick="event.stopPropagation();del('${p.id}')">🗑️</button></div>
+    </div>`;
+  }
+
+  // ── Modal ─────────────────────────────────────────────────
+  function openModal(id=null) {
+    editingId=id; currentRating=0; currentPhoto=null; scannedBarcode=null;
+    clearSelectedProduct();
+    document.getElementById('productSearchInput').value = '';
+    document.getElementById('searchResults').classList.remove('show');
+    document.getElementById('inputName').value = '';
+    document.getElementById('inputCategory').value = '';
+    document.getElementById('inputNote').value = '';
+    resetPhoto();
+    setEntryMethod('search');
+
+    if (id) {
+      const p = products.find(x=>x.id===id);
+      if (p) {
+        document.getElementById('inputName').value = p.name||'';
+        document.getElementById('inputCategory').value = p.category||'';
+        document.getElementById('inputNote').value = p.note||'';
+        currentRating = p.rating||0;
+        currentPhoto = p.photo||null;
+        scannedBarcode = p.barcode||null;
+        if (p.photo) showPhotoPreview(p.photo);
+        if (p.name) {
+          // Show a "selected" badge with whatever we have
+          showSelectedProduct(p.name, p.photo, p.category||'');
+        }
+      }
+    }
+
+    document.getElementById('modalTitle').textContent = id ? 'Edit Product' : 'Add a Product';
+    updateStars();
+    document.getElementById('modalOverlay').classList.add('open');
+  }
+
+  function closeModal() { stopScanner(); document.getElementById('modalOverlay').classList.remove('open'); }
+  function closeModalIfOutside(e) { if(e.target===document.getElementById('modalOverlay')) closeModal(); }
+
+  // ── Entry Method ──────────────────────────────────────────
+  function setEntryMethod(m) {
+    ['search','scan','manual'].forEach(x => document.getElementById('btn-'+x).classList.toggle('active', x===m));
+    document.getElementById('searchPanel').style.display = m==='search' ? 'block' : 'none';
+    document.getElementById('photoUpload').style.display = m==='scan' ? 'none' : 'block';
+    if (m==='scan') startScanner(); else stopScanner();
+  }
+
+  // ── Open Food Facts Search ────────────────────────────────
+  function onProductSearch(e) {
+    const q = e.target.value.trim();
+    clearTimeout(searchTimer);
+    if (q.length < 2) { document.getElementById('searchResults').classList.remove('show'); return; }
+    searchTimer = setTimeout(() => searchOFF(q), 500);
+  }
+
+  async function searchOFF(query) {
+    const spinner = document.getElementById('searchSpinner');
+    const resultsEl = document.getElementById('searchResults');
+    spinner.classList.add('show');
+    resultsEl.classList.remove('show');
+
+    try {
+      // Search Open Food Facts — filter to Farm Boy brand where possible, fallback to general
+      const url = `https://world.openfoodfacts.org/cgi/search.pl?search_terms=${encodeURIComponent(query)}&search_simple=1&action=process&json=1&page_size=8&fields=product_name,brands,categories_tags,image_front_thumb_url,code`;
+      const res = await fetch(url);
+      const data = await res.json();
+      renderSearchResults(data.products || []);
+    } catch(err) {
+      resultsEl.innerHTML = '<div class="search-no-results">⚠️ Search unavailable — please enter name manually below.</div>';
+      resultsEl.classList.add('show');
+    }
+    spinner.classList.remove('show');
+  }
+
+  function renderSearchResults(items) {
+    const el = document.getElementById('searchResults');
+    if (!items.length) {
+      el.innerHTML = '<div class="search-no-results">No results found — try different keywords, or fill in the name below manually.</div>';
+      el.classList.add('show');
+      return;
+    }
+
+    // Clean up and de-dupe by name
+    const seen = new Set();
+    const clean = items.filter(p => {
+      const name = cleanName(p.product_name);
+      if (!name || seen.has(name.toLowerCase())) return false;
+      seen.add(name.toLowerCase());
+      return true;
+    });
+
+    el.innerHTML = clean.map(p => {
+      const name = cleanName(p.product_name);
+      const brand = p.brands || '';
+      const img = p.image_front_thumb_url || '';
+      const thumb = img
+        ? `<div class="result-thumb"><img src="${img}" alt="${name}" onerror="this.parentElement.innerHTML='🏷️'"></div>`
+        : `<div class="result-thumb">🏷️</div>`;
+      return `<div class="search-result-item" onclick="selectProduct(${JSON.stringify({name,brand,img,code:p.code||''}).replace(/"/g,'&quot;')})">
+        ${thumb}
+        <div class="result-info">
+          <div class="result-name">${name}</div>
+          ${brand ? `<div class="result-brand">${brand}</div>` : ''}
+        </div>
+      </div>`;
+    }).join('');
+    el.classList.add('show');
+  }
+
+  function cleanName(n) {
+    if (!n) return '';
+    return n.replace(/^\s+|\s+$/g,'').replace(/\s+/g,' ');
+  }
+
+  function selectProduct(p) {
+    // Hide search, show selected badge
+    document.getElementById('searchResults').classList.remove('show');
+    document.getElementById('productSearchInput').value = '';
+
+    // Fill in form fields
+    document.getElementById('inputName').value = p.name;
+
+    // Set photo if available
+    if (p.img && !currentPhoto) {
+      currentPhoto = p.img;
+      showPhotoPreview(p.img);
+    }
+
+    showSelectedProduct(p.name, p.img || null, p.brand || '');
+  }
+
+  function showSelectedProduct(name, imgSrc, sub) {
+    document.getElementById('selectedName').textContent = name;
+    document.getElementById('selectedSub').textContent = sub || 'Tap ✕ to clear and search again';
+    const thumb = document.getElementById('selectedThumb');
+    if (imgSrc && imgSrc.startsWith('http')) {
+      thumb.innerHTML = `<img src="${imgSrc}" alt="${name}" onerror="this.parentElement.innerHTML='🏷️'">`;
+    } else if (imgSrc && imgSrc.startsWith('data:')) {
+      thumb.innerHTML = `<img src="${imgSrc}" alt="${name}">`;
+    } else {
+      thumb.textContent = '🏷️';
+    }
+    document.getElementById('selectedProduct').classList.add('show');
+    document.getElementById('searchPanel').style.display = 'none';
+  }
+
+  function clearSelectedProduct() {
+    document.getElementById('selectedProduct').classList.remove('show');
+    document.getElementById('searchPanel').style.display = 'block';
+    document.getElementById('inputName').value = '';
+    currentPhoto = null;
+    resetPhoto();
+  }
+
+  // ── Barcode Scanner ───────────────────────────────────────
+  async function lookupBarcode(code) {
+    document.getElementById('scannerStatus').textContent = '🔍 Looking up product…';
+    try {
+      const res = await fetch(`https://world.openfoodfacts.org/api/v2/product/${code}.json?fields=product_name,brands,image_front_url,categories_tags`);
+      const data = await res.json();
+      if (data.status === 1 && data.product?.product_name) {
+        const p = data.product;
+        return {
+          name: cleanName(p.product_name),
+          brand: p.brands || '',
+          img: p.image_front_url || '',
+          code
+        };
+      }
+    } catch(e) {}
+    return { name: '', brand: '', img: '', code };
+  }
+
+  function startScanner() {
+    document.getElementById('scannerWrap').classList.add('active');
+    document.getElementById('stopScanBtn').style.display = 'block';
+    document.getElementById('photoUpload').style.display = 'none';
+    document.getElementById('scannerStatus').textContent = 'Starting camera…';
+
+    Quagga.init({
+      inputStream: {
+        name: 'Live', type: 'LiveStream',
+        target: document.getElementById('barcode-scanner'),
+        constraints: { facingMode: 'environment', width:{ideal:1280}, height:{ideal:720} }
+      },
+      decoder: { readers: ['ean_reader','ean_8_reader','upc_reader','upc_e_reader','code_128_reader','code_39_reader'] },
+      locate: true, numOfWorkers: 2, frequency: 10
+    }, function(err) {
+      if (err) {
+        document.getElementById('scannerStatus').textContent = '⚠️ Camera access denied. Please allow camera and try again.';
+        return;
+      }
+      document.getElementById('scannerStatus').textContent = '📷 Scanning…';
+      Quagga.start();
+      scannerRunning = true;
+
+      let last=null, count=0;
+      Quagga.onDetected(async function(result) {
+        const code = result.codeResult.code;
+        if (!code) return;
+        if (code===last) count++; else { last=code; count=1; }
+        if (count >= 3) {
+          Quagga.offDetected();
+          scannedBarcode = code;
+          const product = await lookupBarcode(code);
+          stopScanner();
+
+          if (product.name) {
+            // Found in database!
+            document.getElementById('inputName').value = product.name;
+            if (product.img) { currentPhoto = product.img; showPhotoPreview(product.img); }
+            showSelectedProduct(product.name, product.img || null, product.brand ? `${product.brand} · Barcode found ✓` : 'Barcode found ✓');
+          } else {
+            // Not found — let user type name
+            showSelectedProduct(`Barcode: ${code}`, null, 'Product not in database — please type the name below');
+            document.getElementById('inputName').focus();
+          }
+          setEntryMethod('search'); // switch back so form is visible
+          document.getElementById('searchPanel').style.display = 'none'; // but hide search panel
+        }
+      });
+    });
+  }
+
+  function stopScanner() {
+    if (scannerRunning) { try { Quagga.stop(); } catch(e) {} scannerRunning = false; }
+    document.getElementById('scannerWrap').classList.remove('active');
+    document.getElementById('stopScanBtn').style.display = 'none';
+    document.getElementById('photoUpload').style.display = 'block';
+  }
+
+  // ── Photo ─────────────────────────────────────────────────
+  function handlePhoto(e) {
+    const f = e.target.files[0]; if (!f) return;
+    const r = new FileReader();
+    r.onload = ev => { currentPhoto = ev.target.result; showPhotoPreview(currentPhoto); };
+    r.readAsDataURL(f);
+  }
+  function showPhotoPreview(src) {
+    document.getElementById('photoUpload').innerHTML = `<img src="${src}" alt="Preview"><input type="file" id="photoFile" accept="image/*" onchange="handlePhoto(event)">`;
+  }
+  function resetPhoto() {
+    document.getElementById('photoUpload').innerHTML = `<span class="photo-upload-icon">📸</span><span class="photo-upload-text">Tap to add or change photo (optional)</span><input type="file" id="photoFile" accept="image/*" onchange="handlePhoto(event)">`;
+  }
+
+  // ── Stars ─────────────────────────────────────────────────
+  function setRating(r) { currentRating=r; updateStars(); }
+  function updateStars() {
+    document.querySelectorAll('.star-btn').forEach((b,i) => b.classList.toggle('active', i<currentRating));
+    document.getElementById('ratingLabel').textContent = LABELS[currentRating] || 'Tap a star to rate';
+  }
+
+  // ── Save / Delete ─────────────────────────────────────────
+  function saveProduct() {
+    const name = document.getElementById('inputName').value.trim();
+    if (!name) { alert('Please enter a product name!'); return; }
+    const data = { name, category: document.getElementById('inputCategory').value, note: document.getElementById('inputNote').value.trim(), rating: currentRating, photo: currentPhoto, barcode: scannedBarcode||undefined };
+    if (editingId) {
+      const i = products.findIndex(p=>p.id===editingId);
+      if (i>-1) products[i] = {...products[i], ...data};
+    } else {
+      products.unshift({ id: Date.now().toString(), ...data });
+    }
+    persist(); closeModal(); renderProducts();
+  }
+
+  function del(id) {
+    if (!confirm('Remove this product?')) return;
+    products = products.filter(p=>p.id!==id);
+    persist(); renderProducts();
+  }
+
+  loadProducts();
+</script>
+</body>
+</html>
