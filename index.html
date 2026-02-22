@@ -26,32 +26,16 @@
   body { font-family: 'DM Sans', sans-serif; background: var(--cream); color: var(--text); min-height: 100vh; }
 
   /* ── PASSWORD SCREEN ── */
-  #lockScreen {
-    position: fixed; inset: 0; background: var(--green);
-    display: flex; flex-direction: column; align-items: center; justify-content: center;
-    z-index: 999; padding: 40px 30px;
-  }
+  #lockScreen { position: fixed; inset: 0; background: var(--green); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 999; padding: 40px 30px; }
   #lockScreen.hidden { display: none; }
   .lock-leaf { font-size: 56px; margin-bottom: 12px; }
   .lock-title { font-family: 'Playfair Display', serif; color: white; font-size: 32px; font-weight: 900; margin-bottom: 4px; }
   .lock-sub { color: var(--green-light); font-size: 13px; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 40px; }
   .lock-label { color: rgba(255,255,255,0.7); font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; align-self: flex-start; width: 100%; max-width: 320px; }
-  .lock-input {
-    width: 100%; max-width: 320px; padding: 16px 18px;
-    background: rgba(255,255,255,0.15); border: 2px solid rgba(255,255,255,0.3);
-    border-radius: 14px; color: white; font-family: 'DM Sans', sans-serif;
-    font-size: 18px; outline: none; text-align: center; letter-spacing: 3px;
-    margin-bottom: 14px; transition: border-color 0.2s;
-  }
+  .lock-input { width: 100%; max-width: 320px; padding: 16px 18px; background: rgba(255,255,255,0.15); border: 2px solid rgba(255,255,255,0.3); border-radius: 14px; color: white; font-family: 'DM Sans', sans-serif; font-size: 18px; outline: none; text-align: center; letter-spacing: 3px; margin-bottom: 14px; transition: border-color 0.2s; }
   .lock-input::placeholder { color: rgba(255,255,255,0.4); letter-spacing: 1px; }
   .lock-input:focus { border-color: var(--gold); }
-  .lock-btn {
-    width: 100%; max-width: 320px; padding: 16px;
-    background: var(--gold); color: var(--brown); border: none; border-radius: 14px;
-    font-family: 'DM Sans', sans-serif; font-size: 16px; font-weight: 700;
-    cursor: pointer; transition: opacity 0.2s; margin-bottom: 12px;
-  }
-  .lock-btn:active { opacity: 0.85; }
+  .lock-btn { width: 100%; max-width: 320px; padding: 16px; background: var(--gold); color: var(--brown); border: none; border-radius: 14px; font-family: 'DM Sans', sans-serif; font-size: 16px; font-weight: 700; cursor: pointer; margin-bottom: 12px; }
   .lock-error { color: #ffb3b3; font-size: 13px; min-height: 18px; text-align: center; }
 
   /* ── HEADER ── */
@@ -88,6 +72,7 @@
   .sync-banner { display: flex; align-items: center; gap: 8px; padding: 8px 16px; font-size: 12px; color: var(--muted); background: white; border-bottom: 1px solid var(--border); }
   .sync-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--green-light); flex-shrink: 0; }
   .sync-dot.syncing { background: var(--gold); animation: pulse 1s ease-in-out infinite; }
+  .sync-dot.error { background: var(--red-light); }
   @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }
 
   /* ── PRODUCT LIST ── */
@@ -194,10 +179,7 @@
 
   .save-btn { width: 100%; padding: 15px; background: var(--green); color: white; border: none; border-radius: 12px; font-family: 'DM Sans', sans-serif; font-size: 16px; font-weight: 600; cursor: pointer; margin-top: 10px; }
 
-  /* ── NAME FIELD ── */
-  .name-field-wrap { position: relative; }
-  .name-who { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); display: flex; gap: 6px; }
-  .who-btn { padding: 4px 10px; border-radius: 20px; border: 1.5px solid var(--border); background: white; font-size: 12px; font-weight: 600; cursor: pointer; color: var(--muted); }
+  .who-btn { padding: 8px 16px; border-radius: 20px; border: 1.5px solid var(--border); background: white; font-size: 13px; font-weight: 600; cursor: pointer; color: var(--muted); font-family: 'DM Sans', sans-serif; }
   .who-btn.active { border-color: var(--green); background: var(--green-pale); color: var(--green); }
 </style>
 </head>
@@ -216,67 +198,58 @@
 
 <!-- MAIN APP -->
 <div id="app" style="display:none">
-
-<header>
-  <div class="header-top">
-    <div class="logo">
-      <span class="logo-leaf">🌿</span>
-      <div>
-        <div class="logo-text">Farm Boy</div>
-        <div class="logo-sub">Product Tracker</div>
+  <header>
+    <div class="header-top">
+      <div class="logo">
+        <span class="logo-leaf">🌿</span>
+        <div>
+          <div class="logo-text">Farm Boy</div>
+          <div class="logo-sub">Product Tracker</div>
+        </div>
+      </div>
+      <div class="header-right">
+        <button class="lock-icon-btn" onclick="lockApp()">🔒</button>
+        <button class="add-btn" onclick="openModal()">+</button>
       </div>
     </div>
-    <div class="header-right">
-      <button class="lock-icon-btn" onclick="lockApp()" title="Lock">🔒</button>
-      <button class="add-btn" onclick="openModal()">+</button>
+    <div class="search-wrap">
+      <span class="search-icon">🔍</span>
+      <input class="search-input" type="text" placeholder="Search your products…" id="searchInput" oninput="renderProducts()">
     </div>
+  </header>
+
+  <div class="tabs">
+    <div class="tab active-all" id="tab-all" onclick="setTab('all')">All</div>
+    <div class="tab" id="tab-liked" onclick="setTab('liked')">👍 Liked</div>
+    <div class="tab" id="tab-disliked" onclick="setTab('disliked')">👎 Disliked</div>
   </div>
-  <div class="search-wrap">
-    <span class="search-icon">🔍</span>
-    <input class="search-input" type="text" placeholder="Search your products…" id="searchInput" oninput="renderProducts()">
+
+  <div class="stats">
+    <div class="stat stat-all"><div class="stat-num" id="stat-total">0</div><div class="stat-label">Total</div></div>
+    <div class="stat stat-liked"><div class="stat-num" id="stat-liked">0</div><div class="stat-label">Liked</div></div>
+    <div class="stat stat-disliked"><div class="stat-num" id="stat-disliked">0</div><div class="stat-label">Disliked</div></div>
   </div>
-</header>
 
-<div class="tabs">
-  <div class="tab active-all" id="tab-all" onclick="setTab('all')">All</div>
-  <div class="tab" id="tab-liked" onclick="setTab('liked')">👍 Liked</div>
-  <div class="tab" id="tab-disliked" onclick="setTab('disliked')">👎 Disliked</div>
+  <div class="sync-banner">
+    <div class="sync-dot" id="syncDot"></div>
+    <span id="syncLabel">Connecting to Firebase…</span>
+  </div>
+
+  <div class="product-list" id="productList"></div>
 </div>
 
-<div class="stats">
-  <div class="stat stat-all"><div class="stat-num" id="stat-total">0</div><div class="stat-label">Total</div></div>
-  <div class="stat stat-liked"><div class="stat-num" id="stat-liked">0</div><div class="stat-label">Liked</div></div>
-  <div class="stat stat-disliked"><div class="stat-num" id="stat-disliked">0</div><div class="stat-label">Disliked</div></div>
-</div>
-
-<div class="sync-banner">
-  <div class="sync-dot" id="syncDot"></div>
-  <span id="syncLabel">Synced with shared list</span>
-</div>
-
-<div class="product-list" id="productList"></div>
-
-</div><!-- end #app -->
-
-<!-- ADD/EDIT MODAL -->
+<!-- MODAL -->
 <div class="modal-overlay" id="modalOverlay" onclick="closeModalIfOutside(event)">
   <div class="modal">
     <div class="modal-handle"></div>
     <div class="modal-title" id="modalTitle">Add a Product</div>
 
     <div class="entry-methods">
-      <button class="entry-btn active" id="btn-search" onclick="setEntryMethod('search')">
-        <span class="entry-icon">🔍</span>Search
-      </button>
-      <button class="entry-btn" id="btn-scan" onclick="setEntryMethod('scan')">
-        <span class="entry-icon">📷</span>Scan Barcode
-      </button>
-      <button class="entry-btn" id="btn-manual" onclick="setEntryMethod('manual')">
-        <span class="entry-icon">⌨️</span>Manual
-      </button>
+      <button class="entry-btn active" id="btn-search" onclick="setEntryMethod('search')"><span class="entry-icon">🔍</span>Search</button>
+      <button class="entry-btn" id="btn-scan" onclick="setEntryMethod('scan')"><span class="entry-icon">📷</span>Scan Barcode</button>
+      <button class="entry-btn" id="btn-manual" onclick="setEntryMethod('manual')"><span class="entry-icon">⌨️</span>Manual</button>
     </div>
 
-    <!-- SEARCH PANEL -->
     <div id="searchPanel">
       <div class="search-tip">Search the product database — select a result to auto-fill the name and photo.</div>
       <div class="product-search-wrap">
@@ -286,7 +259,6 @@
       <div class="search-results" id="searchResults"></div>
     </div>
 
-    <!-- SELECTED PRODUCT PREVIEW -->
     <div class="selected-product" id="selectedProduct">
       <div class="selected-thumb" id="selectedThumb">🏷️</div>
       <div class="selected-info">
@@ -296,7 +268,6 @@
       <button class="selected-clear" onclick="clearSelectedProduct()">✕</button>
     </div>
 
-    <!-- SCANNER -->
     <div class="scanner-wrap" id="scannerWrap">
       <div id="barcode-scanner"></div>
       <div class="scanner-overlay">
@@ -307,14 +278,12 @@
     </div>
     <button class="stop-scan-btn" id="stopScanBtn" onclick="stopScanner()">✕ Cancel Scan</button>
 
-    <!-- PHOTO -->
     <div class="photo-upload" id="photoUpload" onclick="document.getElementById('photoFile').click()">
       <span class="photo-upload-icon">📸</span>
       <span class="photo-upload-text">Tap to add or change photo (optional)</span>
       <input type="file" id="photoFile" accept="image/*" onchange="handlePhoto(event)">
     </div>
 
-    <!-- FIELDS -->
     <div class="field">
       <label>Product Name *</label>
       <input type="text" id="inputName" placeholder="e.g. Aged Cheddar Crackers">
@@ -366,12 +335,28 @@
   </div>
 </div>
 
-<script>
-  // ── Config ─────────────────────────────────────────────────
+<!-- FIREBASE -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-app.js";
+  import { getFirestore, collection, onSnapshot, addDoc, updateDoc, deleteDoc, doc, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyAmtxejkT-j2-fytzrrBXhyUrPx2CFH3uc",
+    authDomain: "farmboy-tracker.firebaseapp.com",
+    projectId: "farmboy-tracker",
+    storageBucket: "farmboy-tracker.firebasestorage.app",
+    messagingSenderId: "873331685664",
+    appId: "1:873331685664:web:f89dc7f0dcb57867067f45"
+  };
+
+  const firebaseApp = initializeApp(firebaseConfig);
+  const db = getFirestore(firebaseApp);
+
+  // ── Config ────────────────────────────────────────────────
   const PASSWORD = 'farmboy92';
   const SESSION_KEY = 'fb_unlocked';
 
-  // ── State ──────────────────────────────────────────────────
+  // ── State ─────────────────────────────────────────────────
   let products = [];
   let currentTab = 'all';
   let editingId = null;
@@ -381,13 +366,13 @@
   let scannerRunning = false;
   let searchTimer = null;
   let currentWho = 'me';
-  let syncInterval = null;
+  let unsubscribe = null;
 
   const LABELS = ['','😬 Really Disliked','😕 Didn\'t Love It','😐 It\'s OK','😊 Pretty Good','🤩 Loved It!'];
   const WHO_LABELS = { me: '👩 Melanie', partner: '👨 Richard' };
 
-  // ── Password ───────────────────────────────────────────────
-  function tryUnlock() {
+  // ── Password ──────────────────────────────────────────────
+  window.tryUnlock = function() {
     const val = document.getElementById('lockInput').value;
     if (val === PASSWORD) {
       sessionStorage.setItem(SESSION_KEY, '1');
@@ -402,15 +387,14 @@
     }
   }
 
-  function lockApp() {
+  window.lockApp = function() {
     sessionStorage.removeItem(SESSION_KEY);
+    if (unsubscribe) unsubscribe();
     document.getElementById('lockScreen').classList.remove('hidden');
     document.getElementById('app').style.display = 'none';
     document.getElementById('lockInput').value = '';
-    clearInterval(syncInterval);
   }
 
-  // Check if already unlocked this session
   if (sessionStorage.getItem(SESSION_KEY) === '1') {
     document.getElementById('lockScreen').classList.add('hidden');
     document.getElementById('app').style.display = 'block';
@@ -419,46 +403,62 @@
     setTimeout(() => document.getElementById('lockInput').focus(), 300);
   }
 
-  // ── App init ───────────────────────────────────────────────
-  async function startApp() {
-    await loadProducts();
-    // Poll for updates every 20 seconds so both users stay in sync
-    syncInterval = setInterval(async () => {
-      await loadProducts(true);
-    }, 20000);
-  }
-
-  // ── Storage / Sync ─────────────────────────────────────────
-  async function loadProducts(silent = false) {
-    if (!silent) setSyncStatus('syncing', 'Loading…');
+  // ── Firebase real-time listener ───────────────────────────
+  function startApp() {
+    setSyncStatus('syncing', 'Connecting to Firebase…');
     try {
-      const r = await window.storage.get('farmboy-shared', true); // shared=true
-      if (r?.value) products = JSON.parse(r.value);
-      setSyncStatus('synced', 'Synced with shared list');
+      unsubscribe = onSnapshot(collection(db, 'products'), (snapshot) => {
+        products = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+        // Sort by newest first
+        products.sort((a, b) => {
+          const ta = a.createdAt?.seconds || 0;
+          const tb = b.createdAt?.seconds || 0;
+          return tb - ta;
+        });
+        setSyncStatus('synced', 'Live sync active ✓');
+        renderProducts();
+      }, (error) => {
+        setSyncStatus('error', 'Connection error — check your internet');
+      });
     } catch(e) {
-      setSyncStatus('synced', 'Loaded from cache');
-    }
-    renderProducts();
-  }
-
-  async function persist() {
-    setSyncStatus('syncing', 'Saving…');
-    try {
-      await window.storage.set('farmboy-shared', JSON.stringify(products), true); // shared=true
-      setSyncStatus('synced', 'Synced with shared list');
-    } catch(e) {
-      setSyncStatus('synced', 'Saved locally');
+      setSyncStatus('error', 'Could not connect to Firebase');
     }
   }
 
   function setSyncStatus(state, label) {
     const dot = document.getElementById('syncDot');
-    dot.className = 'sync-dot' + (state === 'syncing' ? ' syncing' : '');
+    dot.className = 'sync-dot' + (state==='syncing' ? ' syncing' : state==='error' ? ' error' : '');
     document.getElementById('syncLabel').textContent = label;
   }
 
+  // ── Save to Firebase ──────────────────────────────────────
+  async function persist(data, id = null) {
+    setSyncStatus('syncing', 'Saving…');
+    try {
+      if (id) {
+        await updateDoc(doc(db, 'products', id), { ...data, updatedAt: serverTimestamp() });
+      } else {
+        await addDoc(collection(db, 'products'), { ...data, createdAt: serverTimestamp() });
+      }
+      setSyncStatus('synced', 'Live sync active ✓');
+    } catch(e) {
+      setSyncStatus('error', 'Save failed — check your internet');
+      alert('Could not save product. Please check your connection and try again.');
+    }
+  }
+
+  async function deleteProduct(id) {
+    setSyncStatus('syncing', 'Deleting…');
+    try {
+      await deleteDoc(doc(db, 'products', id));
+      setSyncStatus('synced', 'Live sync active ✓');
+    } catch(e) {
+      setSyncStatus('error', 'Delete failed');
+    }
+  }
+
   // ── Tabs ──────────────────────────────────────────────────
-  function setTab(t) {
+  window.setTab = function(t) {
     currentTab = t;
     document.querySelectorAll('.tab').forEach(el => el.className = 'tab');
     document.getElementById('tab-' + t).className = 'tab active-' + t;
@@ -519,7 +519,7 @@
   }
 
   // ── Modal ─────────────────────────────────────────────────
-  function openModal(id=null) {
+  window.openModal = function(id=null) {
     editingId=id; currentRating=0; currentPhoto=null; scannedBarcode=null; currentWho='me';
     clearSelectedProduct();
     document.getElementById('productSearchInput').value = '';
@@ -527,9 +527,7 @@
     document.getElementById('inputName').value = '';
     document.getElementById('inputCategory').value = '';
     document.getElementById('inputNote').value = '';
-    resetPhoto();
-    setWho('me');
-    setEntryMethod('search');
+    resetPhoto(); setWho('me'); setEntryMethod('search');
 
     if (id) {
       const p = products.find(x=>x.id===id);
@@ -546,32 +544,29 @@
         setWho(currentWho);
       }
     }
-
     document.getElementById('modalTitle').textContent = id ? 'Edit Product' : 'Add a Product';
     updateStars();
     document.getElementById('modalOverlay').classList.add('open');
   }
 
-  function closeModal() { stopScanner(); document.getElementById('modalOverlay').classList.remove('open'); }
-  function closeModalIfOutside(e) { if(e.target===document.getElementById('modalOverlay')) closeModal(); }
+  window.closeModal = function() { stopScanner(); document.getElementById('modalOverlay').classList.remove('open'); }
+  window.closeModalIfOutside = function(e) { if(e.target===document.getElementById('modalOverlay')) closeModal(); }
 
-  // ── Who ───────────────────────────────────────────────────
-  function setWho(w) {
+  window.setWho = function(w) {
     currentWho = w;
     document.getElementById('who-me').classList.toggle('active', w==='me');
     document.getElementById('who-partner').classList.toggle('active', w==='partner');
   }
 
-  // ── Entry method ──────────────────────────────────────────
-  function setEntryMethod(m) {
+  window.setEntryMethod = function(m) {
     ['search','scan','manual'].forEach(x => document.getElementById('btn-'+x).classList.toggle('active', x===m));
     document.getElementById('searchPanel').style.display = m==='search' ? 'block' : 'none';
     document.getElementById('photoUpload').style.display = m==='scan' ? 'none' : 'block';
     if (m==='scan') startScanner(); else stopScanner();
   }
 
-  // ── Product Search (Open Food Facts) ──────────────────────
-  function onProductSearch(e) {
+  // ── Product Search ────────────────────────────────────────
+  window.onProductSearch = function(e) {
     const q = e.target.value.trim();
     clearTimeout(searchTimer);
     if (q.length < 2) { document.getElementById('searchResults').classList.remove('show'); return; }
@@ -581,15 +576,14 @@
   async function searchOFF(query) {
     const spinner = document.getElementById('searchSpinner');
     const resultsEl = document.getElementById('searchResults');
-    spinner.classList.add('show');
-    resultsEl.classList.remove('show');
+    spinner.classList.add('show'); resultsEl.classList.remove('show');
     try {
       const url = `https://world.openfoodfacts.org/cgi/search.pl?search_terms=${encodeURIComponent(query)}&search_simple=1&action=process&json=1&page_size=8&fields=product_name,brands,image_front_thumb_url,code`;
       const res = await fetch(url);
       const data = await res.json();
       renderSearchResults(data.products || []);
     } catch(err) {
-      resultsEl.innerHTML = '<div class="search-no-results">⚠️ Search unavailable — please enter the name manually below.</div>';
+      resultsEl.innerHTML = '<div class="search-no-results">⚠️ Search unavailable — please enter the name manually.</div>';
       resultsEl.classList.add('show');
     }
     spinner.classList.remove('show');
@@ -603,22 +597,19 @@
       if (!name || seen.has(name.toLowerCase())) return false;
       seen.add(name.toLowerCase()); return true;
     });
-    if (!clean.length) {
-      el.innerHTML = '<div class="search-no-results">No results — try different keywords, or use Manual entry below.</div>';
-      el.classList.add('show'); return;
-    }
+    if (!clean.length) { el.innerHTML = '<div class="search-no-results">No results — try different keywords or use Manual entry.</div>'; el.classList.add('show'); return; }
     el.innerHTML = clean.map(p => {
       const name = (p.product_name||'').trim();
       const brand = p.brands||'';
       const img = p.image_front_thumb_url||'';
-      const thumb = img ? `<div class="result-thumb"><img src="${img}" alt="" onerror="this.parentElement.innerHTML='🏷️'"></div>` : `<div class="result-thumb">🏷️</div>`;
-      const data = JSON.stringify({name,brand,img,code:p.code||''}).replace(/"/g,'&quot;');
-      return `<div class="search-result-item" onclick="selectProduct(${data})">${thumb}<div><div class="result-name">${name}</div>${brand?`<div class="result-brand">${brand}</div>`:''}</div></div>`;
+      const thumb = img ? `<div class="result-thumb"><img src="${img}" onerror="this.parentElement.innerHTML='🏷️'"></div>` : `<div class="result-thumb">🏷️</div>`;
+      const d = JSON.stringify({name,brand,img,code:p.code||''}).replace(/"/g,'&quot;');
+      return `<div class="search-result-item" onclick="selectProduct(${d})">${thumb}<div><div class="result-name">${name}</div>${brand?`<div class="result-brand">${brand}</div>`:''}</div></div>`;
     }).join('');
     el.classList.add('show');
   }
 
-  function selectProduct(p) {
+  window.selectProduct = function(p) {
     document.getElementById('searchResults').classList.remove('show');
     document.getElementById('productSearchInput').value = '';
     document.getElementById('inputName').value = p.name;
@@ -631,13 +622,13 @@
     document.getElementById('selectedSub').textContent = sub || 'Tap ✕ to search again';
     const thumb = document.getElementById('selectedThumb');
     if (imgSrc && (imgSrc.startsWith('http')||imgSrc.startsWith('data:'))) {
-      thumb.innerHTML = `<img src="${imgSrc}" alt="" onerror="this.parentElement.innerHTML='🏷️'">`;
+      thumb.innerHTML = `<img src="${imgSrc}" onerror="this.parentElement.innerHTML='🏷️'">`;
     } else { thumb.textContent = '🏷️'; }
     document.getElementById('selectedProduct').classList.add('show');
     document.getElementById('searchPanel').style.display = 'none';
   }
 
-  function clearSelectedProduct() {
+  window.clearSelectedProduct = function() {
     document.getElementById('selectedProduct').classList.remove('show');
     document.getElementById('searchPanel').style.display = 'block';
     document.getElementById('inputName').value = '';
@@ -663,7 +654,6 @@
     document.getElementById('stopScanBtn').style.display = 'block';
     document.getElementById('photoUpload').style.display = 'none';
     document.getElementById('scannerStatus').textContent = 'Starting camera…';
-
     Quagga.init({
       inputStream: { name:'Live', type:'LiveStream', target: document.getElementById('barcode-scanner'), constraints: { facingMode:'environment', width:{ideal:1280}, height:{ideal:720} } },
       decoder: { readers: ['ean_reader','ean_8_reader','upc_reader','upc_e_reader','code_128_reader','code_39_reader'] },
@@ -696,7 +686,7 @@
     });
   }
 
-  function stopScanner() {
+  window.stopScanner = function() {
     if (scannerRunning) { try { Quagga.stop(); } catch(e) {} scannerRunning = false; }
     document.getElementById('scannerWrap').classList.remove('active');
     document.getElementById('stopScanBtn').style.display = 'none';
@@ -704,44 +694,46 @@
   }
 
   // ── Photo ─────────────────────────────────────────────────
-  function handlePhoto(e) {
+  window.handlePhoto = function(e) {
     const f = e.target.files[0]; if (!f) return;
     const r = new FileReader();
     r.onload = ev => { currentPhoto = ev.target.result; showPhotoPreview(currentPhoto); };
     r.readAsDataURL(f);
   }
   function showPhotoPreview(src) {
-    document.getElementById('photoUpload').innerHTML = `<img src="${src}" alt="Preview" onerror="this.style.display='none'"><input type="file" id="photoFile" accept="image/*" onchange="handlePhoto(event)">`;
+    document.getElementById('photoUpload').innerHTML = `<img src="${src}" onerror="this.style.display='none'"><input type="file" id="photoFile" accept="image/*" onchange="handlePhoto(event)">`;
   }
   function resetPhoto() {
     document.getElementById('photoUpload').innerHTML = `<span class="photo-upload-icon">📸</span><span class="photo-upload-text">Tap to add or change photo (optional)</span><input type="file" id="photoFile" accept="image/*" onchange="handlePhoto(event)">`;
   }
 
   // ── Stars ─────────────────────────────────────────────────
-  function setRating(r) { currentRating=r; updateStars(); }
+  window.setRating = function(r) { currentRating=r; updateStars(); }
   function updateStars() {
     document.querySelectorAll('.star-btn').forEach((b,i)=>b.classList.toggle('active',i<currentRating));
     document.getElementById('ratingLabel').textContent = LABELS[currentRating]||'Tap a star to rate';
   }
 
   // ── Save / Delete ─────────────────────────────────────────
-  function saveProduct() {
+  window.saveProduct = async function() {
     const name = document.getElementById('inputName').value.trim();
     if (!name) { alert('Please enter a product name!'); return; }
-    const data = { name, category: document.getElementById('inputCategory').value, note: document.getElementById('inputNote').value.trim(), rating: currentRating, photo: currentPhoto, barcode: scannedBarcode||undefined, who: currentWho };
-    if (editingId) {
-      const i = products.findIndex(p=>p.id===editingId);
-      if (i>-1) products[i] = {...products[i], ...data};
-    } else {
-      products.unshift({ id: Date.now().toString(), ...data });
-    }
-    persist(); closeModal(); renderProducts();
+    const data = {
+      name,
+      category: document.getElementById('inputCategory').value,
+      note: document.getElementById('inputNote').value.trim(),
+      rating: currentRating,
+      photo: currentPhoto || null,
+      barcode: scannedBarcode || null,
+      who: currentWho
+    };
+    await persist(data, editingId);
+    closeModal();
   }
 
-  function del(id) {
+  window.del = async function(id) {
     if (!confirm('Remove this product from the shared list?')) return;
-    products = products.filter(p=>p.id!==id);
-    persist(); renderProducts();
+    await deleteProduct(id);
   }
 </script>
 </body>
