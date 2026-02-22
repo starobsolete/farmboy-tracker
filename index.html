@@ -697,8 +697,27 @@
   window.handlePhoto = function(e) {
     const f = e.target.files[0]; if (!f) return;
     const r = new FileReader();
-    r.onload = ev => { currentPhoto = ev.target.result; showPhotoPreview(currentPhoto); };
+    r.onload = ev => {
+      resizeImage(ev.target.result, 400, (resized) => {
+        currentPhoto = resized;
+        showPhotoPreview(resized);
+      });
+    };
     r.readAsDataURL(f);
+  }
+
+  function resizeImage(dataUrl, maxSize, callback) {
+    const img = new Image();
+    img.onload = function() {
+      const canvas = document.createElement('canvas');
+      let w = img.width, h = img.height;
+      if (w > h) { if (w > maxSize) { h = h * maxSize / w; w = maxSize; } }
+      else { if (h > maxSize) { w = w * maxSize / h; h = maxSize; } }
+      canvas.width = w; canvas.height = h;
+      canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+      callback(canvas.toDataURL('image/jpeg', 0.7));
+    };
+    img.src = dataUrl;
   }
   function showPhotoPreview(src) {
     document.getElementById('photoUpload').innerHTML = `<img src="${src}" onerror="this.style.display='none'"><input type="file" id="photoFile" accept="image/*" onchange="handlePhoto(event)">`;
@@ -718,12 +737,16 @@
   window.saveProduct = async function() {
     const name = document.getElementById('inputName').value.trim();
     if (!name) { alert('Please enter a product name!'); return; }
+    // If photo is an external URL, store the URL directly (no size issue)
+    // If it's base64 (user uploaded), it's already been resized to 400px
+    const photo = currentPhoto || null;
+
     const data = {
       name,
       category: document.getElementById('inputCategory').value,
       note: document.getElementById('inputNote').value.trim(),
       rating: currentRating,
-      photo: currentPhoto || null,
+      photo: photo,
       barcode: scannedBarcode || null,
       who: currentWho
     };
