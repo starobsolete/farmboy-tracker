@@ -93,7 +93,10 @@
   .card-name { font-weight: 600; font-size: 15px; line-height: 1.3; margin-bottom: 2px; }
   .card-category { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 5px; }
   .stars-display { display: flex; gap: 2px; margin-bottom: 5px; }
-  .star { font-size: 15px; } .star.filled { color: var(--gold); } .star.empty { color: #ddd; }
+  .star { font-size: 15px; display: inline-block; position: relative; color: #ddd; }
+  .star.filled { color: var(--gold); }
+  .star.half { color: #ddd; }
+  .star.half::before { content: '★'; position: absolute; left: 0; top: 0; width: 50%; overflow: hidden; color: var(--gold); display: block; }
   .card-note { font-size: 12px; color: var(--muted); line-height: 1.4; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
   .card-addedby { font-size: 10px; color: var(--muted); margin-top: 4px; font-style: italic; }
   .card-actions { position: absolute; top: 10px; right: 10px; }
@@ -172,9 +175,12 @@
   .field textarea { resize: vertical; min-height: 70px; }
 
   /* ── STAR RATING ── */
-  .star-rating-input { display: flex; gap: 8px; justify-content: center; padding: 6px 0; }
-  .star-btn { font-size: 36px; background: none; border: none; cursor: pointer; color: #ddd; }
-  .star-btn.active { color: var(--gold); }
+  .star-rating-input { display: flex; gap: 4px; justify-content: center; padding: 6px 0; }
+  .star-input-wrap { position: relative; width: 40px; height: 40px; cursor: pointer; }
+  .star-input-wrap .star-bg { font-size: 40px; color: #ddd; line-height: 1; }
+  .star-input-wrap .star-fg { position: absolute; top: 0; left: 0; font-size: 40px; color: var(--gold); overflow: hidden; line-height: 1; width: 0%; transition: width 0.1s; }
+  .star-input-wrap .half-zone { position: absolute; left: 0; top: 0; width: 50%; height: 100%; z-index: 2; }
+  .star-input-wrap .full-zone { position: absolute; right: 0; top: 0; width: 50%; height: 100%; z-index: 2; }
   .rating-label { text-align: center; font-size: 13px; color: var(--muted); margin-top: 2px; min-height: 18px; }
 
   .save-btn { width: 100%; padding: 15px; background: var(--green); color: white; border: none; border-radius: 12px; font-family: 'DM Sans', sans-serif; font-size: 16px; font-weight: 600; cursor: pointer; margin-top: 10px; }
@@ -316,12 +322,12 @@
 
     <div class="field">
       <label>Your Rating</label>
-      <div class="star-rating-input">
-        <button class="star-btn" onclick="setRating(1)">★</button>
-        <button class="star-btn" onclick="setRating(2)">★</button>
-        <button class="star-btn" onclick="setRating(3)">★</button>
-        <button class="star-btn" onclick="setRating(4)">★</button>
-        <button class="star-btn" onclick="setRating(5)">★</button>
+      <div class="star-rating-input" id="starRatingInput">
+        <div class="star-input-wrap" id="star-1"><span class="star-bg">★</span><span class="star-fg" id="sfg-1">★</span><span class="half-zone" onclick="setRating(0.5)"></span><span class="full-zone" onclick="setRating(1)"></span></div>
+        <div class="star-input-wrap" id="star-2"><span class="star-bg">★</span><span class="star-fg" id="sfg-2">★</span><span class="half-zone" onclick="setRating(1.5)"></span><span class="full-zone" onclick="setRating(2)"></span></div>
+        <div class="star-input-wrap" id="star-3"><span class="star-bg">★</span><span class="star-fg" id="sfg-3">★</span><span class="half-zone" onclick="setRating(2.5)"></span><span class="full-zone" onclick="setRating(3)"></span></div>
+        <div class="star-input-wrap" id="star-4"><span class="star-bg">★</span><span class="star-fg" id="sfg-4">★</span><span class="half-zone" onclick="setRating(3.5)"></span><span class="full-zone" onclick="setRating(4)"></span></div>
+        <div class="star-input-wrap" id="star-5"><span class="star-bg">★</span><span class="star-fg" id="sfg-5">★</span><span class="half-zone" onclick="setRating(4.5)"></span><span class="full-zone" onclick="setRating(5)"></span></div>
       </div>
       <div class="rating-label" id="ratingLabel">Tap a star to rate</div>
     </div>
@@ -368,7 +374,7 @@
   let currentWho = 'me';
   let unsubscribe = null;
 
-  const LABELS = ['','😬 Really Disliked','😕 Didn\'t Love It','😐 It\'s OK','😊 Pretty Good','🤩 Loved It!'];
+  const LABELS = {'0.5':'😬 Really Disliked','1':'😬 Really Disliked','1.5':'😕 Didn\'t Love It','2':'😕 Didn\'t Love It','2.5':'😐 It\'s OK','3':'😐 It\'s OK','3.5':'😊 Pretty Good','4':'😊 Pretty Good','4.5':'🤩 Loved It!','5':'🤩 Loved It!'};
   const WHO_LABELS = { me: '👩 Melanie', partner: '👨 Richard' };
 
   // ── Password ──────────────────────────────────────────────
@@ -471,13 +477,13 @@
     let list = products.filter(p => {
       const m = (p.name||'').toLowerCase().includes(q)||(p.category||'').toLowerCase().includes(q)||(p.note||'').toLowerCase().includes(q);
       if (!m) return false;
-      if (currentTab==='liked') return p.rating>=4;
+      if (currentTab==='liked') return p.rating>=3.5;
       if (currentTab==='disliked') return p.rating>0&&p.rating<=2;
       return true;
     });
 
     document.getElementById('stat-total').textContent = products.length;
-    document.getElementById('stat-liked').textContent = products.filter(p=>p.rating>=4).length;
+    document.getElementById('stat-liked').textContent = products.filter(p=>p.rating>=3.5).length;
     document.getElementById('stat-disliked').textContent = products.filter(p=>p.rating>0&&p.rating<=2).length;
 
     const el = document.getElementById('productList');
@@ -489,7 +495,7 @@
     }
 
     if (currentTab==='all') {
-      const liked=list.filter(p=>p.rating>=4), neutral=list.filter(p=>p.rating===3||!p.rating), disliked=list.filter(p=>p.rating>0&&p.rating<=2);
+      const liked=list.filter(p=>p.rating>=3.5), neutral=list.filter(p=>p.rating===3||!p.rating), disliked=list.filter(p=>p.rating>0&&p.rating<=2);
       let h='';
       if (liked.length) h+=`<div class="section-header">🌿 Liked</div>`+liked.map(cardHTML).join('');
       if (neutral.length) h+=`<div class="section-header">⚖️ Mixed / Unrated</div>`+neutral.map(cardHTML).join('');
@@ -502,7 +508,11 @@
 
   function cardHTML(p) {
     const s = p.rating>=4?'liked':p.rating>0&&p.rating<=2?'disliked':'neutral';
-    const stars = [1,2,3,4,5].map(i=>`<span class="star ${i<=p.rating?'filled':'empty'}">★</span>`).join('');
+    const stars = [1,2,3,4,5].map(i => {
+      if (p.rating >= i) return '<span class="star filled">★</span>';
+      if (p.rating >= i - 0.5) return '<span class="star half">★</span>';
+      return '<span class="star empty">★</span>';
+    }).join('');
     const img = p.photo ? `<div class="card-img"><img src="${p.photo}" alt="${p.name}" onerror="this.parentElement.innerHTML='🏷️'"></div>` : `<div class="card-img">🏷️</div>`;
     const addedBy = p.who ? `<div class="card-addedby">Added by ${WHO_LABELS[p.who]||p.who}</div>` : '';
     return `<div class="card ${s}" onclick="openModal('${p.id}')">
@@ -733,8 +743,18 @@
   // ── Stars ─────────────────────────────────────────────────
   window.setRating = function(r) { currentRating=r; updateStars(); }
   function updateStars() {
-    document.querySelectorAll('.star-btn').forEach((b,i)=>b.classList.toggle('active',i<currentRating));
-    document.getElementById('ratingLabel').textContent = LABELS[currentRating]||'Tap a star to rate';
+    for (let i = 1; i <= 5; i++) {
+      const fg = document.getElementById('sfg-' + i);
+      if (!fg) continue;
+      if (currentRating >= i) {
+        fg.style.width = '100%'; // full star
+      } else if (currentRating >= i - 0.5) {
+        fg.style.width = '50%'; // half star
+      } else {
+        fg.style.width = '0%'; // empty
+      }
+    }
+    document.getElementById('ratingLabel').textContent = LABELS[String(currentRating)] || 'Tap a star to rate';
   }
 
   // ── Save / Delete ─────────────────────────────────────────
