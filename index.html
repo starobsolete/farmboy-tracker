@@ -251,9 +251,9 @@
     </div>
 
     <div id="searchPanel">
-      <div class="search-tip">Search the product database — select a result to auto-fill the name and photo.</div>
+      <div class="search-tip">Search Farm Boy products — type a product name and select from the results. If nothing comes up, use Manual entry.</div>
       <div class="product-search-wrap">
-        <input class="product-search-input" type="text" id="productSearchInput" placeholder="e.g. Farm Boy cheddar crackers…" oninput="onProductSearch(event)">
+        <input class="product-search-input" type="text" id="productSearchInput" placeholder="e.g. Everything Bagel Dip…" oninput="onProductSearch(event)">
         <div class="product-search-spinner" id="searchSpinner"></div>
       </div>
       <div class="search-results" id="searchResults"></div>
@@ -570,7 +570,7 @@
     const q = e.target.value.trim();
     clearTimeout(searchTimer);
     if (q.length < 2) { document.getElementById('searchResults').classList.remove('show'); return; }
-    searchTimer = setTimeout(() => searchOFF(q), 500);
+    searchTimer = setTimeout(() => searchOFF(q), 300);
   }
 
   async function searchOFF(query) {
@@ -578,10 +578,14 @@
     const resultsEl = document.getElementById('searchResults');
     spinner.classList.add('show'); resultsEl.classList.remove('show');
     try {
-      const url = `https://world.openfoodfacts.org/cgi/search.pl?search_terms=${encodeURIComponent(query)}&search_simple=1&action=process&json=1&page_size=8&fields=product_name,brands,image_front_thumb_url,code`;
+      // Search specifically for Farm Boy brand products
+      const url = `https://world.openfoodfacts.org/cgi/search.pl?search_terms=${encodeURIComponent('Farm Boy ' + query)}&tagtype_0=brands&tag_contains_0=contains&tag_0=farm+boy&action=process&json=1&page_size=8&fields=product_name,brands,image_front_thumb_url,code`;
       const res = await fetch(url);
       const data = await res.json();
-      renderSearchResults(data.products || []);
+      const products = (data.products || []).filter(p =>
+        (p.brands || '').toLowerCase().includes('farm boy')
+      );
+      renderSearchResults(products);
     } catch(err) {
       resultsEl.innerHTML = '<div class="search-no-results">⚠️ Search unavailable — please enter the name manually.</div>';
       resultsEl.classList.add('show');
@@ -597,7 +601,7 @@
       if (!name || seen.has(name.toLowerCase())) return false;
       seen.add(name.toLowerCase()); return true;
     });
-    if (!clean.length) { el.innerHTML = '<div class="search-no-results">No results — try different keywords or use Manual entry.</div>'; el.classList.add('show'); return; }
+    if (!clean.length) { el.innerHTML = '<div class="search-no-results">No Farm Boy products found — try shorter keywords (e.g. "bagel" instead of "everything bagel dip"), or use Manual entry below.</div>'; el.classList.add('show'); return; }
     el.innerHTML = clean.map(p => {
       const name = (p.product_name||'').trim();
       const brand = p.brands||'';
