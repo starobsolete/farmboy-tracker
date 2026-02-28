@@ -61,7 +61,7 @@
 
   /* ── TABS ── */
   .tabs { display: flex; background: white; border-bottom: 2px solid var(--border); position: sticky; top: 108px; z-index: 99; }
-  .tab { flex: 1; padding: 14px; text-align: center; font-size: 13px; font-weight: 600; color: var(--muted); cursor: pointer; border-bottom: 3px solid transparent; margin-bottom: -2px; }
+  .tab { flex: 1; padding: 12px 4px; text-align: center; font-size: 11px; font-weight: 600; color: var(--muted); cursor: pointer; border-bottom: 3px solid transparent; margin-bottom: -2px; }
   .tab.active-all { color: var(--brown); border-color: var(--brown); }
   .tab.active-liked { color: var(--green); border-color: var(--green); }
   .tab.active-disliked { color: var(--red); border-color: var(--red); }
@@ -274,19 +274,20 @@
 
   <div class="product-list" id="productList"></div>
 
-<div id="recsPanel" style="display:none; padding:16px;">
-  <div class="recs-intro">
-    <div class="recs-intro-icon">✨</div>
-    <div class="recs-intro-title">Try Next</div>
-    <div class="recs-intro-sub">Based on what you and Richard have liked and disliked, here are some Farm Boy products worth trying.</div>
+  <div id="recsPanel" style="display:none; padding:16px;">
+    <div class="recs-intro">
+      <div class="recs-intro-icon">✨</div>
+      <div class="recs-intro-title">Try Next</div>
+      <div class="recs-intro-sub">Based on what you and Richard have liked and disliked, here are some Farm Boy products worth trying.</div>
+    </div>
+    <button class="recs-generate-btn" id="recsGenerateBtn" onclick="generateRecs()">🌿 Generate Recommendations</button>
+    <div id="recsLoading" style="display:none;" class="recs-loading">
+      <div class="recs-spinner"></div>
+      <div class="recs-loading-text">Analysing your taste profile…</div>
+    </div>
+    <div id="recsContent"></div>
   </div>
-  <button class="recs-generate-btn" id="recsGenerateBtn" onclick="generateRecs()">🌿 Generate Recommendations</button>
-  <div id="recsLoading" style="display:none;" class="recs-loading">
-    <div class="recs-spinner"></div>
-    <div class="recs-loading-text">Analysing your taste profile…</div>
-  </div>
-  <div id="recsContent"></div>
-</div>
+
 </div>
 
 <!-- MODAL -->
@@ -391,6 +392,45 @@
   </div>
 </div>
 
+<!-- STANDALONE PASSWORD SCRIPT - runs independently of Firebase -->
+<script>
+  var PASSWORD = 'farmboy92';
+  var SESSION_KEY = 'fb_unlocked';
+
+  function tryUnlock() {
+    var val = document.getElementById('lockInput').value;
+    if (val === PASSWORD) {
+      sessionStorage.setItem(SESSION_KEY, '1');
+      document.getElementById('lockScreen').classList.add('hidden');
+      document.getElementById('app').style.display = 'block';
+      document.getElementById('lockError').textContent = '';
+    } else {
+      document.getElementById('lockError').textContent = 'Incorrect password — try again.';
+      document.getElementById('lockInput').value = '';
+      document.getElementById('lockInput').focus();
+    }
+  }
+
+  function lockApp() {
+    sessionStorage.removeItem(SESSION_KEY);
+    document.getElementById('lockScreen').classList.remove('hidden');
+    document.getElementById('app').style.display = 'none';
+    document.getElementById('lockInput').value = '';
+  }
+
+  // Check session on load
+  if (sessionStorage.getItem(SESSION_KEY) === '1') {
+    document.addEventListener('DOMContentLoaded', function() {
+      document.getElementById('lockScreen').classList.add('hidden');
+      document.getElementById('app').style.display = 'block';
+    });
+  } else {
+    document.addEventListener('DOMContentLoaded', function() {
+      setTimeout(function() { document.getElementById('lockInput').focus(); }, 300);
+    });
+  }
+</script>
+
 <!-- FIREBASE -->
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/12.9.0/firebase-app.js";
@@ -428,6 +468,9 @@
   const WHO_LABELS = { me: '👩 Melanie', partner: '👨 Richard' };
 
   // ── Password ──────────────────────────────────────────────
+  // tryUnlock and lockApp are defined in the standalone script above
+  // Here we just hook into the unlock flow to start Firebase
+
   window.tryUnlock = function() {
     const val = document.getElementById('lockInput').value;
     if (val === PASSWORD) {
@@ -455,8 +498,6 @@
     document.getElementById('lockScreen').classList.add('hidden');
     document.getElementById('app').style.display = 'block';
     startApp();
-  } else {
-    setTimeout(() => document.getElementById('lockInput').focus(), 300);
   }
 
   // ── Firebase real-time listener ───────────────────────────
